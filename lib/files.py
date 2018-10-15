@@ -1,6 +1,38 @@
+from bitstring import BitStream
+class Section:
+    def __init__(self, data):
+        if(data != None):
+            self._data = BitStream(hex=data.hex())
+        else:
+            self._data = None
+        self.x = self._read_x()
+        self.y = self._read_y()
+        self.flag = self._read_flag()
+        self.vector = []
+        self.vector.append(self.x)
+        self.vector.append(self.y)
+    def _read_x(self):
+        self._data.pos = 6
+        return self._data.read('int:13')
+        return None
+    def _read_y(self):
+        self._data.pos = 19
+        return self._data.read('int:13')
+        return None
+    def _read_flag(self):
+        self._data.pos = 0
+        return self._data.read('uint:6')
+        return None
+
+class Segment:
+    def __init__(self, data):
+        self.header = self._read_header()
+        self.sections = self._read_sections()
+
 class HeroPath:
-    def __init__(self, file):
+    def __init__(self, file, byteorder):
         self._file = file
+        self._byteorder = byteorder
         self.header = self._read_header()
         self.segments = self._read_segments()
         self.sections = self._read_sections()
@@ -16,7 +48,7 @@ class HeroPath:
     def _read_segment(self, segno):
         startpos = (1216 * segno) + 64
         self._file.seek(startpos, 0)
-        if(int.from_bytes(self._file.read(4), byteorder='little') == 0):
+        if(int.from_bytes(self._file.read(4), byteorder=self._byteorder) == 0):
             return None
         self._file.seek(startpos, 0)
         return self._file.read(1216)
@@ -30,5 +62,4 @@ class HeroPath:
         startpos = (1216 * segno) + 64
         self._file.seek(startpos, 0)
         self._file.seek(secno * 4, 1)
-        return self._file.read(4)
-        return None
+        return Section(self._file.read(4))
